@@ -1,0 +1,62 @@
+#!groovy
+
+@Library('jenkinslib') _
+
+def tools = new org.devops.tools()
+
+String buildType = "${env.buildType}"
+String buildShell = "${env.buildShell}"
+String deployHosts = "${env.deployHosts}"
+String srcUrl = "${env.srcUrl}"
+String branchName = "${env.branchName}"
+
+
+//Pipeline
+pipeline {
+    agent any
+    options {
+        timestamps()  //日志会有时间
+        skipDefaultCheckout()  //删除隐式checkout scm语句
+        disableConcurrentBuilds() //禁止并行
+        timeout(time: 1, unit: 'HOURS')  //流水线超时设置1h
+    }
+
+    stages {
+        //下载代码
+        stage("下载代码") { //阶段名称
+            steps {  //步骤
+                script {
+                    tools.PrintMes("获取代码", "green")
+                    tools.checkOut(srcUrl, branchName)
+                }
+            }
+        }
+
+        //代码扫描
+        stage("代码扫描") {
+            steps {
+                script {
+                    tools.PrintMes("代码扫描", "green")
+                    tools.sonarScan(buildType)
+                }
+            }
+        }
+        //代码扫描
+        stage("构建代码") {
+            steps {
+                script {
+                    tools.PrintMes("构建代码", "green")
+                    tools.build(buildType, buildShell)
+                }
+            }
+        }
+        //部署扫描
+        stage("部署代码") {
+            steps {
+                script {
+                    tools.PrintMes("部署代码", "green")
+                }
+            }
+        }
+    }
+}
