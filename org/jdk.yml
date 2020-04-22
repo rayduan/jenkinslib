@@ -1,0 +1,33 @@
+---
+- hosts: "{{ hosts_name }}"
+  user: rduan@aexpec.com
+  become: yes
+  become_method: sudo
+  tasks:
+    - name: copy jdk to remote servers
+      copy: src=/tmp/jdk-11.0.4_linux-x64_bin.tar.gz  dest=/usr/local
+    - name: depressing jdks
+      shell: chdir=/usr/local tar xf jdk-11.0.4_linux-x64_bin.tar.gz
+    #    - name: rename jdk dirs
+    #      shell: mv /usr/local/jdk-11.0.4 /usr/local/java8
+    - name: add config to profile
+      shell: /bin/echo {{ item }} >> /etc/profile
+      with_items:
+        - export JAVA_HOME=/usr/local/jdk-11.0.4
+        - export CLASSPATH=.:\$JAVA_HOME/lib/dt.jar:\$JAVA_HOME/lib
+        - export PATH=\$JAVA_HOME/bin:\$PATH
+    - name: take profile effect
+      shell: source /etc/profile
+    - name: add to bashrc
+      shell: /bin/echo "source /etc/profile"  >> ~/.bashrc
+      tags: add_bashrc
+    - name: take bashrc effect
+      shell: source ~/.bashrc
+      tags: source_bashrc
+    - name: test
+      shell: java -version
+      tags: test_v
+    - name: create a symbolic link for java11
+      shell: ln -s /usr/local/jdk-11.0.4/bin/java /usr/bin/java
+    - name: test java version
+      shell: java -version
