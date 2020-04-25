@@ -13,7 +13,9 @@ String branchName = "${env.branchName}"
 
 //Pipeline
 pipeline {
-    agent any
+    agent {
+        label 'slave1'
+    }
     options {
         timestamps()  //日志会有时间
         skipDefaultCheckout()  //删除隐式checkout scm语句
@@ -55,6 +57,7 @@ pipeline {
             steps {
                 script {
                     tools.PrintMes("部署代码", "green")
+                    tools.deploy(deployHosts)
                 }
             }
         }
