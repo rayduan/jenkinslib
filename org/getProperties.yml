@@ -1,0 +1,19 @@
+---
+- hosts: "192.168.80.130"
+  remote_user: root
+  tasks:
+    - name: Get JSON from the Interwebs
+      uri:
+        url: http://106.54.227.205/openapi/v1/envs/DEV/apps/testid1/clusters/default/namespaces/application/releases/latest
+        method: GET
+        body_format: json
+        headers:
+          Authorization: c8c13933dd381fb132c659c1d4aecfc25cad1851
+        return_content: yes
+      register: json_response
+    - name: Write nested JSON variable to disk
+      debug: var=json_response verbosity=0    #debug的模块显示输出的记过
+      delegate_to: localhost
+    - name: Write nested JSON variable to disk
+      copy: content={{json_response.json.configurations}} dest="/tmp/foo.txt"
+      delegate_to: localhost
