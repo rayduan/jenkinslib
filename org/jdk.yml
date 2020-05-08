@@ -1,6 +1,6 @@
 ---
 - hosts: "{{ hosts_name }}"
-  user: rduan@aexpec.com
+  user: rayduan
   become: yes
   become_method: sudo
   tasks:
