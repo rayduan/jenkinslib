@@ -1,0 +1,11 @@
+---
+# This playbook deploys a simple to deploy.
+
+- hosts: {{deployServer}}
+#  remote_user: root
+  become: yes
+  become_method: sudo
+
+  roles:
+    - scm
+    - ops

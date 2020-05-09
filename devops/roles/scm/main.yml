@@ -1,0 +1,32 @@
+
+---
+- hosts: "{{ deployServer }}"
+  remote_user: root
+  tasks:
+    - file: "path={{ workspace }}{{ artifactId }} state=directory"
+      delegate_to: localhost
+      #从nexus中获取jar包
+    - name: get jar from nexus
+      tags: 
+        - getJar
+      maven_artifact:
+        group_id: "{{ groupId }}"
+        artifact_id: "{{ artifactId }}"
+        repository_url: '{{ repository }}'
+        dest: "{{ workspace }}{{ artifactId }}/"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        version: "{{ appVersion }}"
+      delegate_to: localhost
+    - name: copy to dest
+      tags: 
+        - pushJar
+      copy:
+        src: "{{ workspace }}{{ artifactId }}/"
+        dest: "{{ workspace }}"
+    - name: delete local package
+      tags: 
+	- deteleOldPackage
+      file: "path={{ workspace }}{{ artifactId }} state=absent force=yes"
+      delegate_to: {{ localserver }}
+

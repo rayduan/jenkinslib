@@ -1,0 +1,43 @@
+---
+- hosts: "{{ deployServer }}"
+  remote_user: root
+  tasks:
+    # 获取进程号
+    - name: get pid of api
+      tags:
+        - getPid
+      shell: "ps -ef | grep -v grep | grep  {{ artifactId }} | awk '{print $2}'"
+      register: running_processes
+
+    # 发送停止运行信号
+    - name: Kill running processes
+      tags:
+        - stopApp
+      shell: "kill {{ item }}"
+      tags:
+        - killService
+      with_items: "{{ running_processes.stdout_lines }}"
+
+    # 等待60s钟，确认获取的到的pid是否都停止运行
+    - wait_for:
+        path: "/proc/{{ item }}/status"
+        state: absent
+        timeout: 60
+      tags:
+        - waitKillService
+      with_items: "{{ running_processes.stdout_lines }}"
+      ignore_errors: yes
+      register: killed_processes
+    # 强制杀死，未停止运行的进程
+    - name: Force kill stuck processes
+      tags:
+        - forceStopApp
+      shell: "kill -9 {{ item }}"
+      with_items: "{{ killed_processes.results | select('failed') | map(attribute='item') | list }}"
+
+    # 启动新的jar包
+    - name: start wechat-api
+      tags:
+        - startApp
+      shell: "nohup java -jar {{ workspace }}{{ artifactId }}-{{ appVersion }}.jar --name={{ artifactId }}  &"
+
